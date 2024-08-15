@@ -42,7 +42,7 @@ async function run() {
     // Get all products
     app.get("/products", async (req, res) => {
       const query = req.query;
-      const { sort } = query;
+      const { sort = "", search = "" } = query;
 
       //   sorting based on the query
       if (sort === "h2l") {
@@ -65,6 +65,17 @@ async function run() {
         const products = await productsCollection
           .find()
           .sort({ creationDateTime: -1 })
+          .toArray();
+        res.send(products);
+        return;
+      }
+
+      //   search based on the query
+      if (query?.search) {
+        const products = await productsCollection
+          .find({
+            $or: [{ productName: { $regex: query.search, $options: "i" } }],
+          })
           .toArray();
         res.send(products);
         return;
