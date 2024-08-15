@@ -41,11 +41,38 @@ async function run() {
 
     // Get all products
     app.get("/products", async (req, res) => {
+      const query = req.query;
+      const { sort } = query;
+
+      //   sorting based on the query
+      if (sort === "h2l") {
+        const products = await productsCollection
+          .find()
+          .sort({ price: -1 })
+          .toArray();
+        res.send(products);
+        return;
+      }
+      if (sort === "l2h") {
+        const products = await productsCollection
+          .find()
+          .sort({ price: 1 })
+          .toArray();
+        res.send(products);
+        return;
+      }
+      if (sort === "newest") {
+        const products = await productsCollection
+          .find()
+          .sort({ creationDateTime: -1 })
+          .toArray();
+        res.send(products);
+        return;
+      }
+
       const products = await productsCollection.find().toArray();
       res.send(products);
     });
-
-    
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
