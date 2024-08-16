@@ -43,7 +43,7 @@ async function run() {
     app.get("/products", async (req, res) => {
       const query = req?.query;
       const page = parseInt(query?.page) || 1;
-      const limit = parseInt(query?.limit) || 6;
+      const limit = 6;
       const sort = query?.sort;
       const search = query?.search;
       const totalProducts = await productsCollection.countDocuments();
@@ -89,6 +89,7 @@ async function run() {
         .skip((page - 1) * limit)
         .limit(limit)
         .toArray();
+
       res.send({ products, totalProducts });
     });
 
