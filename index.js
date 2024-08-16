@@ -41,8 +41,12 @@ async function run() {
 
     // Get all products
     app.get("/products", async (req, res) => {
-      const query = req.query;
-      const { sort = "", search = "" } = query;
+      const query = req?.query;
+      const page = parseInt(query?.page) || 1;
+      const limit = parseInt(query?.limit) || 6;
+      const sort = query?.sort;
+      const search = query?.search;
+      const totalProducts = await productsCollection.countDocuments();
 
       //   sorting based on the query
       if (sort === "h2l") {
@@ -71,18 +75,21 @@ async function run() {
       }
 
       //   search based on the query
-      if (query?.search) {
+      if (search) {
         const products = await productsCollection
-          .find({
-            $or: [{ productName: { $regex: query.search, $options: "i" } }],
-          })
+          .find({ productName: { $regex: search, $options: "i" } })
           .toArray();
         res.send(products);
         return;
       }
 
-      const products = await productsCollection.find().toArray();
-      res.send(products);
+      //   pagination based on the query
+      const products = await productsCollection
+        .find()
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .toArray();
+      res.send({ products, totalProducts });
     });
 
     // Send a ping to confirm a successful connection
