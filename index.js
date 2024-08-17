@@ -49,6 +49,7 @@ async function run() {
       const limit = 6;
       const sort = query?.sort;
       const search = query?.search;
+      const category = query?.category;
       const totalProducts = await productsCollection.countDocuments();
 
       //   sorting based on the query
@@ -56,24 +57,30 @@ async function run() {
         const products = await productsCollection
           .find()
           .sort({ price: -1 })
+          .skip((page - 1) * limit)
+          .limit(limit)
           .toArray();
-        res.send(products);
+        res.send({ products, totalProducts });
         return;
       }
       if (sort === "l2h") {
         const products = await productsCollection
           .find()
           .sort({ price: 1 })
+          .skip((page - 1) * limit)
+          .limit(limit)
           .toArray();
-        res.send(products);
+        res.send({ products, totalProducts });
         return;
       }
       if (sort === "newest") {
         const products = await productsCollection
           .find()
           .sort({ creationDateTime: -1 })
+          .skip((page - 1) * limit)
+          .limit(limit)
           .toArray();
-        res.send(products);
+        res.send({ products, totalProducts });
         return;
       }
 
@@ -81,8 +88,13 @@ async function run() {
       if (search) {
         const products = await productsCollection
           .find({ productName: { $regex: search, $options: "i" } })
+          .skip((page - 1) * limit)
+          .limit(limit)
           .toArray();
-        res.send(products);
+        const totalProducts = await productsCollection.countDocuments({
+          productName: { $regex: search, $options: "i" },
+        });
+        res.send({ products, totalProducts });
         return;
       }
 
@@ -92,6 +104,20 @@ async function run() {
         .skip((page - 1) * limit)
         .limit(limit)
         .toArray();
+
+      // category filter
+      if (category) {
+        const products = await productsCollection
+          .find({ category: { $regex: category, $options: "i" } })
+          .skip((page - 1) * limit)
+          .limit(limit)
+          .toArray();
+        const totalProducts = await productsCollection.countDocuments({
+          category: { $regex: category, $options: "i" },
+        });
+        res.send({ products, totalProducts });
+        return;
+      }
 
       res.send({ products, totalProducts });
     });
