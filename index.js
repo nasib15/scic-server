@@ -99,6 +99,7 @@ async function run() {
     // Get all categories
     app.get("/categories", async (req, res) => {
       const category = req?.query?.category;
+      const brands = req?.query?.brands;
       const categorizationArray = await categoriesCollection.find().toArray();
 
       // cateogry filter
@@ -108,7 +109,12 @@ async function run() {
         return;
       }
 
-      
+      // brand filter
+      if (brands === "brands") {
+        const brands = await categorizationArray[0]?.brands;
+        res.send(brands);
+        return;
+      }
     });
 
     // Send a ping to confirm a successful connection
