@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const { MongoClient, ServerApiVersion } = require("mongodb");
 require("dotenv").config();
 const port = process.env.PORT || 5000;
 const app = express();
@@ -48,97 +48,55 @@ async function run() {
 
     // Get all products
     app.get("/products", async (req, res) => {
-      const query = req?.query;
-      const page = parseInt(query?.page) || 1;
+      const page = parseInt(req?.query?.page) || 1;
       const limit = 6;
-      const sort = query?.sort;
-      const search = query?.search;
-      const category = query?.category;
-      const brand = query?.brand;
-      const totalProducts = await productsCollection.countDocuments();
+      const sort = req?.query?.sort;
+      const search = req?.query?.search;
+      const category = req?.query?.category;
+      const brand = req?.query?.brand;
 
-      //   sorting based on the query
+      // sort options
+
+      let options = {};
+
       if (sort === "h2l") {
-        const products = await productsCollection
-          .find()
-          .sort({ price: -1 })
-          .skip((page - 1) * limit)
-          .limit(limit)
-          .toArray();
-        res.send({ products, totalProducts });
-        return;
-      }
-      if (sort === "l2h") {
-        const products = await productsCollection
-          .find()
-          .sort({ price: 1 })
-          .skip((page - 1) * limit)
-          .limit(limit)
-          .toArray();
-        res.send({ products, totalProducts });
-        return;
-      }
-      if (sort === "newest") {
-        const products = await productsCollection
-          .find()
-          .sort({ creationDateTime: -1 })
-          .skip((page - 1) * limit)
-          .limit(limit)
-          .toArray();
-        res.send({ products, totalProducts });
-        return;
+        options = { sort: { price: -1 } };
       }
 
-      //   search based on the query
-      if (search) {
-        const products = await productsCollection
-          .find({ productName: { $regex: search, $options: "i" } })
-          .skip((page - 1) * limit)
-          .limit(limit)
-          .toArray();
-        const totalProducts = await productsCollection.countDocuments({
-          productName: { $regex: search, $options: "i" },
-        });
-        res.send({ products, totalProducts });
-        return;
+      if (sort === "l2h") {
+        options = { sort: { price: 1 } };
       }
+
+      if (sort === "newest") {
+        options = { sort: { creationDateTime: -1 } };
+      }
+
+      // query options
+
+      let query = {};
+
+      if (search) {
+        query.productName = { $regex: search, $options: "i" };
+      }
+
+      if (category) {
+        query.category = { $regex: category, $options: "i" };
+      }
+
+      if (brand) {
+        query.productName = { $regex: brand, $options: "i" };
+      }
+
+      // filter the result based on price range query
 
       //   pagination based on the query
       const products = await productsCollection
-        .find()
+        .find(query, options)
         .skip((page - 1) * limit)
         .limit(limit)
         .toArray();
 
-      // category filter
-      if (category) {
-        const products = await productsCollection
-          .find({ category: { $regex: category, $options: "i" } })
-          .skip((page - 1) * limit)
-          .limit(limit)
-          .toArray();
-        const totalProducts = await productsCollection.countDocuments({
-          category: { $regex: category, $options: "i" },
-        });
-        res.send({ products, totalProducts });
-        return;
-      }
-
-      // brand filter
-      if (brand) {
-        const products = await productsCollection
-          .find({ productName: { $regex: brand, $options: "i" } })
-          .skip((page - 1) * limit)
-          .limit(limit)
-          .toArray();
-        const totalProducts = await productsCollection.countDocuments({
-          productName: { $regex: brand, $options: "i" },
-        });
-        res.send({ products, totalProducts });
-        return;
-      }
-
-      // filter the result based on price range query
+      const totalProducts = await productsCollection.countDocuments(query);
 
       res.send({ products, totalProducts });
     });
