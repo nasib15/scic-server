@@ -36,6 +36,9 @@ async function run() {
 
     // Collections
     const productsCollection = client.db("productsDB").collection("products");
+    const categoriesCollection = client
+      .db("productsDB")
+      .collection("categorization");
 
     // APIs
 
@@ -91,6 +94,21 @@ async function run() {
         .toArray();
 
       res.send({ products, totalProducts });
+    });
+
+    // Get all categories
+    app.get("/categories", async (req, res) => {
+      const category = req?.query?.category;
+      const categorizationArray = await categoriesCollection.find().toArray();
+
+      // cateogry filter
+      if (category === "category") {
+        const categories = await categorizationArray[0]?.categories;
+        res.send(categories);
+        return;
+      }
+
+      
     });
 
     // Send a ping to confirm a successful connection
