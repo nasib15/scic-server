@@ -50,6 +50,7 @@ async function run() {
       const sort = query?.sort;
       const search = query?.search;
       const category = query?.category;
+      const brand = query?.brand;
       const totalProducts = await productsCollection.countDocuments();
 
       //   sorting based on the query
@@ -119,13 +120,29 @@ async function run() {
         return;
       }
 
+      // brand filter
+      if (brand) {
+        const products = await productsCollection
+          .find({ productName: { $regex: brand, $options: "i" } })
+          .skip((page - 1) * limit)
+          .limit(limit)
+          .toArray();
+        const totalProducts = await productsCollection.countDocuments({
+          productName: { $regex: brand, $options: "i" },
+        });
+        res.send({ products, totalProducts });
+        return;
+      }
+
+      // filter the result based on price range query
+
       res.send({ products, totalProducts });
     });
 
     // Get all categories
     app.get("/categories", async (req, res) => {
       const category = req?.query?.category;
-      const brands = req?.query?.brands;
+      const brand = req?.query?.brand;
       const categorizationArray = await categoriesCollection.find().toArray();
 
       // cateogry filter
@@ -136,7 +153,7 @@ async function run() {
       }
 
       // brand filter
-      if (brands === "brands") {
+      if (brand === "brand") {
         const brands = await categorizationArray[0]?.brands;
         res.send(brands);
         return;
