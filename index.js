@@ -48,15 +48,17 @@ async function run() {
 
     // Get all products
     app.get("/products", async (req, res) => {
-      const page = parseInt(req?.query?.page) || 1;
-      const limit = 6;
       const sort = req?.query?.sort;
       const search = req?.query?.search;
       const category = req?.query?.category;
       const brand = req?.query?.brand;
+      const price = parseInt(req?.query?.price);
+
+      // pagination options
+      const page = parseInt(req?.query?.page) || 1;
+      const limit = 6;
 
       // sort options
-
       let options = {};
 
       if (sort === "h2l") {
@@ -72,7 +74,6 @@ async function run() {
       }
 
       // query options
-
       let query = {};
 
       if (search) {
@@ -87,7 +88,9 @@ async function run() {
         query.productName = { $regex: brand, $options: "i" };
       }
 
-      // filter the result based on price range query
+      if (price) {
+        query.price = { $lte: price };
+      }
 
       //   pagination based on the query
       const products = await productsCollection
