@@ -1,9 +1,14 @@
 const express = require("express");
+const rateLimit = require("express-rate-limit");
 const cors = require("cors");
 const { MongoClient, ServerApiVersion } = require("mongodb");
 require("dotenv").config();
 const port = process.env.PORT || 5000;
 const app = express();
+
+// Basic rate limiting to protect all routes from abuse.
+const apiLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 200, standardHeaders: true, legacyHeaders: false });
+app.use(apiLimiter);
 
 const corsOptions = {
   origin: [
